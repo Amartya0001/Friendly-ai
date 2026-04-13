@@ -1,7 +1,6 @@
-"""Friendly text + optional TTS: Edge (fast) ya tumhari reference file se XTTS clone (local)."""
+"""Friendly text + optional TTS: tumhari reference file se XTTS clone (local)."""
 from __future__ import annotations
 
-import asyncio
 import io
 import os
 import random
@@ -20,16 +19,6 @@ NANA_REFERENCE_FILENAMES = ("nana_patekar.wav", "nana_patekar.mp3")
 
 # Coqui XTTS — lazy load
 _xtts_model = None
-
-# Edge TTS preset (label → voice id). Aur voices: terminal mein `edge-tts --list-voices`
-EDGE_VOICE_PRESETS: dict[str, str] = {
-    "Hindi — Madhur (male)": "hi-IN-MadhurNeural",
-    "Hindi — Swara (female)": "hi-IN-SwaraNeural",
-    "English (India) — Neerja (female)": "en-IN-NeerjaNeural",
-    "English (India) — Prabhat (male)": "en-IN-PrabhatNeural",
-    "English (US) — Aria (female)": "en-US-AriaNeural",
-    "English (US) — Guy (male)": "en-US-GuyNeural",
-}
 
 
 def default_nana_reference_path() -> Path | None:
@@ -118,17 +107,6 @@ def friendly_reply(user_text: str, *, lang: str = "auto") -> str:
             "समझ गया। थोड़ा और detail में बताओ।" if lang == "hi" else "Got it. Tell me a bit more.",
             "ठीक है—आगे बोलो।" if lang == "hi" else "Okay—go on.",
             "दिल की बात करो, समय है।" if lang == "hi" else "Speak your mind—I’m here.",
-        ]
-    )
-
-
-def friendly_after_voice_capture() -> str:
-    """Talk-to-talk hook: baad mein capture ke bytes se STT karke `friendly_reply(transcript)` return karna; abhi friendly placeholder."""
-    return random.choice(
-        [
-            "Tumhari awaaz aa gayi — maine note kar li. Aise hi baat karte raho, accha lagta hai!",
-            "Sun liya! Tumhari baat capture ho gayi. Aur kuch kehna hai?",
-            "Badhiya! Mic se jo bheja woh save ho gaya. Chalo, aage bhi dosti jari rakhte hain.",
         ]
     )
 
@@ -288,61 +266,20 @@ def xtts_clone_wav_bytes(text: str, ref_file: Path | None) -> tuple[bytes | None
     return None, last_err or "XTTS error"
 
 
-async def _tts_to_mp3_edge(text: str, voice: str = "hi-IN-MadhurNeural") -> bytes:
-    import edge_tts
-
-    communicate = edge_tts.Communicate(text, voice)
-    chunks: list[bytes] = []
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            chunks.append(chunk["data"])
-    return b"".join(chunks)
-
-
-def tts_mp3_bytes(
-    text: str,
-    *,
-    voice: str = "hi-IN-MadhurNeural",
-    retries: int = 3,
-) -> bytes | None:
-    """Microsoft Edge neural — internet; network flake par dobara try."""
-    delay = 0.6
-    for attempt in range(max(1, retries)):
-        try:
-            out = asyncio.run(_tts_to_mp3_edge(text, voice))
-            if out:
-                return out
-        except Exception:
-            pass
-        if attempt < retries - 1:
-            time.sleep(delay * (attempt + 1))
-    return None
-
-
 def speak_reply_bytes(
     text: str,
-    mode: str,
     ref: Path | None,
-    *,
-    edge_voice: str | None = None,
 ) -> tuple[bytes | None, str, str]:
     """
-    mode: "clone" | "edge"
     Returns (audio_bytes, mime, clone_error) — clone_error sirf clone mode mein meaningful.
-    mime = audio/wav | audio/mpeg
-    edge_voice: Edge TTS voice id (jaise hi-IN-SwaraNeural); clone path ignore.
+    mime = audio/wav
     """
     if not text.strip():
         return None, "", ""
-    if mode == "clone":
-        nana = nana_clone_reference_path()
-        ref = nana if nana is not None else ref
-        b, err = xtts_clone_wav_bytes(text, ref)
-        if b:
-            return b, "audio/wav", ""
-        return None, "", err or "Clone output nahi bana."
-    v = edge_voice or "hi-IN-MadhurNeural"
-    b = tts_mp3_bytes(text, voice=v)
+
+    nana = nana_clone_reference_path()
+    ref = nana if nana is not None else ref
+    b, err = xtts_clone_wav_bytes(text, ref)
     if b:
-        return b, "audio/mpeg", ""
-    return None, "", ""
+        return b, "audio/wav", ""
+    return None, "", err or "Clone output nahi bana."
