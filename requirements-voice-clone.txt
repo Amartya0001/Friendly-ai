@@ -1,0 +1,30 @@
+# =============================================================================
+# Coqui TTS (PyPI name: TTS) abhi Python 3.12 / 3.13 SUPPORT NAHI KARTA.
+# Pip error "No matching distribution found for TTS" = galat Python version.
+#
+# DHYAN: Project ka `.venv` aksar Python 3.13 hota hai — usse yeh file INSTALL MAT KARO.
+# Hamesha sirf `.venv-tts` (Python 3.11) ka pip use karo, bina activate ke bhi chalega:
+#   .venv-tts\Scripts\pip.exe install -r requirements-voice-clone.txt
+#
+# Theek karne ke liye Python 3.11 wala alag venv banao:
+#   1) https://www.python.org/downloads/ se Python 3.11 install karo (Add to PATH).
+#   2) Project folder mein:
+#        py -3.11 -m venv .venv-tts
+#        .venv-tts\Scripts\activate
+#        python -m pip install -U pip
+#        pip install -r requirements-voice-clone.txt
+#
+# MP3 reference ke liye ffmpeg PATH mein hona chahiye: https://ffmpeg.org/download.html
+# =============================================================================
+
+# Pinned set that works on Windows/Py3.11 with XTTS v2.
+# Notes:
+# - `transformers` 5.x breaks XTTS (missing BeamSearchScorer).
+# - torch>=2.6 flips torch.load(weights_only=True) default; we override via env var in code.
+# - torchcodec needs FFmpeg available at runtime.
+TTS==0.22.0
+torch>=2.0.0
+torchaudio>=2.0.0
+torchcodec>=0.11.0
+transformers==4.41.2
+numpy<2

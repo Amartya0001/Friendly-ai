@@ -1,0 +1,9 @@
+{
+  "name": "nana_patekar",
+  "input_device": null,
+  "sample_rate": 44100,
+  "channels": 1,
+  "reference_audio_path": "nana_patekar.wav",
+  "startup_voice_path": "nana_patekar.wav",
+  "notes": "nana_patekar.wav (ya .mp3) project folder mein — clone ke liye WAV behtar, MP3 ke liye ffmpeg chahiye."
+}
